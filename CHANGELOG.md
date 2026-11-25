@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here.
 
+## 0.1.1 — 2026-11-25
+
+### Fixed
+
+- Saved originals are now keyed by their own SHA-256 under `~/.dsh/dsh-restart/backups/`, so patching a second archive (a test fixture, another install, a copy) can no longer overwrite the installed app's original. The old single file was replaced by whatever archive was patched last, which made `restore` refuse with `size-mismatch` until the app was reinstalled.
+- The test suite runs against an isolated `DSH_RESTART_HOME`; running `node --test` from a clone no longer writes fixture bytes into the user's real state directory. v0.1.0 shipped this defect on GitHub.
+- `restore` now reports `no-backup` with the saved sizes and the recovery options instead of a generic message.
+
+### Added
+
+- `restore --original <path>` installs an explicit stock `lib/main.js` (recovered file, reinstall, another machine).
+- `status` reports `restorable`, `backupSize` and `backupAsar`.
+
 ## 0.1.0 — 2026-11-25
 
 ### Added

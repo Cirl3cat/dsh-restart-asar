@@ -49,7 +49,7 @@ DSH 插件运行在 Host 子进程（Cordis），而「应用」菜单和系统�
 
 * **等长改写**：`main.js` 的字节数完全不变（多出来的字节从 `//#region` / `//#endregion` 纯注释行里删掉，尾部空格补齐），asar 目录里其它文件的 `offset` 全部保持有效；
 * **同步完整性摘要**：同时刷新 asar 目录里 `lib/main.js` 的 SHA-256（等长 hex），即使某个构建打开了 `EnableEmbeddedAsarIntegrityValidation` 也不会失配；
-* **写前备份 + 语法预检**：先把原始 `main.js` 存到 `~/.dsh/dsh-restart/main.original.js`，生成的新内容先跑一次 `node --check`，再写盘；
+* **写前备份 + 语法预检**：先把原始 `main.js` 存到 `~/.dsh/dsh-restart/backups/<sha256>.js`（按原文件摘要一个文件，多份原版互不覆盖；旧版单文件 `main.original.js` 仍会读取），生成的新内容先跑一次 `node --check`，再写盘；
 * **幂等 + 失败即放弃**：已经是补丁状态只做只读检查；结构对不上（换了 DSH 版本或已被别的壳补丁改过）就一个字节都不写，只记日志。
 
 ## 安装
@@ -78,9 +78,10 @@ node lib/patcher.mjs status            # 只读检查
 node lib/patcher.mjs apply --dry-run   # 只验证能否安全打补丁
 node lib/patcher.mjs apply             # 需要时打补丁（幂等）
 node lib/patcher.mjs restore           # 写回安装前的原始 main.js
+node lib/patcher.mjs restore --original <原始 main.js>   # 用指定的原版文件还原
 ```
 
-加 `--json` 输出机器可读结果，加 `--asar <path>` 指定别的 `app.asar`。
+加 `--json` 输出机器可读结果，加 `--asar <path>` 指定别的 `app.asar`。`status` 里的 `restorable` 表示「已保存的原版与当前壳的字节数对得上」，为 `false` 时 `restore` 会拒绝写入并说明原因。
 
 默认路径按以下顺序解析：`--asar` → `DSH_DESKTOP_APP_ASAR` → `DSH_NODE_EXECUTABLE` 同级的 `resources/app.asar` → 本进程可执行文件同级的 `resources/app.asar` → `%LOCALAPPDATA%\Programs\DeepSeek Harness\resources\app.asar` → `%ProgramFiles%\DeepSeek Harness\resources\app.asar`。
 
@@ -92,7 +93,7 @@ node lib/patcher.mjs restore           # 写回安装前的原始 main.js
 node lib/patcher.mjs restore      # 先还原托盘与菜单
 ```
 
-然后在插件管理器里移除本插件，最后退出并重开 DSH。若 `restore` 报 `size-mismatch`（桌面端已经升级过），直接重新安装官方桌面端即可。
+然后在插件管理器里移除本插件，最后退出并重开 DSH。若 `restore` 报 `no-backup`（没有与当前壳字节数匹配的原版）或 `size-mismatch`（桌面端已经升级过），重新安装官方桌面端即可；插件下次启动会重新保存一份原版。也可以先用 `restore --original <备份的 main.js>` 指定一份原版文件。
 
 ## 安全边界与限制
 
@@ -116,7 +117,7 @@ node lib/patcher.mjs restore      # 先还原托盘与菜单
 
 ```bash
 node --check index.js
-node --test test/patch.test.mjs test/patcher.test.mjs   # 纯文本补丁 + 合成 asar 的 apply/restore
+node --test test/patch.test.mjs test/patcher.test.mjs   # 纯文本补丁 + 合成 asar 的 apply/restore（测试自带隔离的状态目录）
 node lib/patcher.mjs status --json
 ```
 

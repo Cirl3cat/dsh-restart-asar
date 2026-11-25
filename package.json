@@ -1,6 +1,6 @@
 {
   "name": "dsh-restart",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Restart entry for the DeepSeek Harness desktop shell: adds 重启 to the Windows caption menu and 重启 DeepSeek Harness to the system tray, with a restart that fully quits and cold-starts the app.",
   "icon": "icon.svg",
   "type": "module",

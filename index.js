@@ -163,6 +163,13 @@ export function apply(ctx) {
               ? `shell patched (${result.asar}); quit and reopen DeepSeek Harness to show the Restart entries`
               : `shell already patched (${result.asar ?? 'unknown archive'})`
           log(ctx, 'info', message)
+          if (result.restorable === false) {
+            log(
+              ctx,
+              'warn',
+              'no saved original matches the installed shell, so "restore" is unavailable until the app is reinstalled',
+            )
+          }
         } else if (result.status === 'missing') {
           log(ctx, 'info', 'skipped: no packaged Windows desktop shell found')
         } else {
