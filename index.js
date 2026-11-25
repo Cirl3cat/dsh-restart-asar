@@ -1,5 +1,5 @@
 /**
- * dsh-restart — Restart entries for the DeepSeek Harness desktop shell.
+ * dsh-restart-asar — Restart entries for the DeepSeek Harness desktop shell.
  *
  * The Windows caption menu ("应用") and the system tray are built by the
  * Electron main process (`resources/app.asar` -> `/lib/main.js`). DSH plugins
@@ -14,17 +14,17 @@
  * (`restartApplication` / `aboutProduct`), so they follow the application
  * language setting exactly like the built-in Open/Quit items.
  *
- * @module dsh-restart
+ * @module dsh-restart-asar
  */
 
 import { spawn } from 'node:child_process'
-import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs'
+import { appendFileSync, mkdirSync, renameSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 /** Cordis plugin name. */
-export const name = 'restart'
+export const name = 'dsh-restart-asar'
 
 /** This package's root directory. */
 const PACKAGE_ROOT = dirname(fileURLToPath(import.meta.url))
@@ -32,8 +32,23 @@ const PACKAGE_ROOT = dirname(fileURLToPath(import.meta.url))
 /** The standalone patcher run in a child process. */
 const PATCHER = join(PACKAGE_ROOT, 'lib', 'patcher.mjs')
 
-/** Where the patcher keeps the original shell and its last result. */
-const STATE_DIR = process.env.DSH_RESTART_HOME ?? join(homedir(), '.dsh', 'dsh-restart')
+/** Where the patcher keeps the originals, the lock, and its last result. */
+const STATE_DIR =
+  process.env.DSH_RESTART_ASAR_HOME ?? process.env.DSH_RESTART_HOME ?? join(homedir(), '.dsh', 'dsh-restart-asar')
+
+/** The state directory of the pre-rename plugin, moved into place once. */
+function migrateLegacyState() {
+  if (process.env.DSH_RESTART_ASAR_HOME !== undefined || process.env.DSH_RESTART_HOME !== undefined) return
+  const before = join(homedir(), '.dsh', 'dsh-restart')
+  const after = join(homedir(), '.dsh', 'dsh-restart-asar')
+  try {
+    renameSync(before, after)
+  } catch {
+    /* the new directory simply starts without the old history */
+  }
+}
+
+migrateLegacyState()
 
 /** How long to wait after activation before touching the archive. */
 const DEFAULT_DELAY_MS = 2000
@@ -45,7 +60,7 @@ const DEFAULT_DELAY_MS = 2000
  * @param message - text to record.
  */
 function log(ctx, level, message) {
-  const line = `dsh-restart: ${message}`
+  const line = `dsh-restart-asar: ${message}`
   try {
     if (typeof ctx?.logger?.[level] === 'function') {
       ctx.logger[level](line)
@@ -74,7 +89,7 @@ function writeStatus(payload) {
     /* never break activation for reporting */
   }
   try {
-    appendFileSync(join(STATE_DIR, 'dsh-restart.log'), `${new Date().toISOString()} ${JSON.stringify(payload)}\n`)
+    appendFileSync(join(STATE_DIR, 'dsh-restart-asar.log'), `${new Date().toISOString()} ${JSON.stringify(payload)}\n`)
   } catch {
     /* never break activation for reporting */
   }
@@ -163,6 +178,13 @@ export function apply(ctx) {
               ? `shell patched (${result.asar}); quit and reopen DeepSeek Harness to show the Restart entries`
               : `shell already patched (${result.asar ?? 'unknown archive'})`
           log(ctx, 'info', message)
+          if (result.integrity === 'mismatch') {
+            log(
+              ctx,
+              'warn',
+              'the archive integrity digest does not match lib/main.js; Electron may refuse to load this shell',
+            )
+          }
           if (result.restorable === false) {
             log(
               ctx,
@@ -182,5 +204,5 @@ export function apply(ctx) {
       disposed = true
       clearTimeout(timer)
     }
-  }, 'dsh-restart: keep the desktop Restart entries patched')
+  }, 'dsh-restart-asar: keep the desktop Restart entries patched')
 }

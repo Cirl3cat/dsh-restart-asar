@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { MARK, buildPatch, status, trimRegionMarkers, validatePatched } from '../lib/patch.js'
+import { LEGACY_MARK, MARK, buildPatch, status, trimRegionMarkers, validatePatched } from '../lib/patch.js'
 import { shellFixture, unknownFixture } from './fixture.mjs'
 
 test('stock fixture is recognised as clean', () => {
@@ -29,6 +29,15 @@ test('patching twice is a no-op', () => {
   const twice = buildPatch(once.text)
   assert.equal(twice.changed, false)
   assert.equal(twice.text, once.text)
+})
+
+test('a shell patched under the old plugin name still reads as patched', () => {
+  const patched = buildPatch(shellFixture()).text
+  const legacy = patched.replace(MARK, LEGACY_MARK)
+  assert.equal(status(legacy), 'patched')
+  assert.equal(status(`${legacy}\n${' '.repeat(MARK.length - LEGACY_MARK.length)}`), 'patched')
+  // The new build does not re-patch it.
+  assert.equal(buildPatch(`${legacy}\n${' '.repeat(MARK.length - LEGACY_MARK.length)}`).changed, false)
 })
 
 test('unknown shell layouts are refused without producing text', () => {

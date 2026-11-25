@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented here.
 
+## 0.2.0 — 2026-11-25
+
+### Changed
+
+- **Renamed to `dsh-restart-asar`** (package, Cordis row id, state directory, logs, docs). The rename avoids the npm name already taken by another restart plugin.
+- State moved from `~/.dsh/dsh-restart/` to `~/.dsh/dsh-restart-asar/`; the old directory is moved once, and the old `DSH_RESTART_HOME` variable is still honoured.
+- A shell patched by 0.1.x (marker `dsh-restart: shell patch`) still reports `patched` and can be restored.
+- `engines.dsh` is now `>=0.2.2-rc.5`: the version bound no longer blocks a newer DSH before the structural check has a say.
+
+### Added
+
+- Cross-process lock (`patcher.lock`, PID + timestamp, 10-minute takeover) around `apply`/`restore`; two DSH instances can no longer interleave writes into the same asar.
+- `fsync` after writing `lib/main.js` and the refreshed directory digest.
+- `status` reports `integrity: ok|mismatch|missing` by comparing the asar directory digest with the packed `lib/main.js`; `apply` refuses to report success on a mismatch.
+- The saved originals are pruned to the newest five (`backups/` no longer grows with every desktop update).
+
 ## 0.1.1 — 2026-11-25
 
 ### Fixed

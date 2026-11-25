@@ -1,25 +1,26 @@
 {
-  "name": "dsh-restart",
-  "version": "0.1.1",
-  "description": "Restart entry for the DeepSeek Harness desktop shell: adds 重启 to the Windows caption menu and 重启 DeepSeek Harness to the system tray, with a restart that fully quits and cold-starts the app.",
+  "name": "dsh-restart-asar",
+  "version": "0.2.0",
+  "description": "Restart entry for the DeepSeek Harness desktop shell, added by a byte-length-preserving app.asar patch: 重启 in the Windows caption menu and 重启 DeepSeek Harness in the system tray, with a restart that fully quits and cold-starts the app.",
   "icon": "icon.svg",
   "type": "module",
   "main": "index.js",
   "license": "MIT",
   "author": "Cirl3cat",
-  "homepage": "https://github.com/Cirl3cat/dsh-restart#readme",
+  "homepage": "https://github.com/Cirl3cat/dsh-restart-asar#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Cirl3cat/dsh-restart.git"
+    "url": "git+https://github.com/Cirl3cat/dsh-restart-asar.git"
   },
   "bugs": {
-    "url": "https://github.com/Cirl3cat/dsh-restart/issues"
+    "url": "https://github.com/Cirl3cat/dsh-restart-asar/issues"
   },
   "keywords": [
     "dsh",
     "dsh-plugin",
     "deepseek-harness",
     "restart",
+    "asar",
     "tray",
     "menu",
     "windows"
@@ -52,6 +53,6 @@
     "manifestVersion": 1
   },
   "engines": {
-    "dsh": ">=0.2.2-rc.5 <0.3.0"
+    "dsh": ">=0.2.2-rc.5"
   }
 }

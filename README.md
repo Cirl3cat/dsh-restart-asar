@@ -1,6 +1,6 @@
-# dsh-restart
+# dsh-restart-asar
 
-[![ci](https://github.com/Cirl3cat/dsh-restart/actions/workflows/ci.yml/badge.svg)](https://github.com/Cirl3cat/dsh-restart/actions/workflows/ci.yml)
+[![ci](https://github.com/Cirl3cat/dsh-restart-asar/actions/workflows/ci.yml/badge.svg)](https://github.com/Cirl3cat/dsh-restart-asar/actions/workflows/ci.yml)
 ![platform](https://img.shields.io/badge/platform-Windows-0078d4)
 ![dsh](https://img.shields.io/badge/DSH-%E2%89%A50.2.2--rc.5-4e6ef2)
 ![license](https://img.shields.io/badge/license-MIT-green)
@@ -48,22 +48,37 @@ DSH 插件运行在 Host 子进程（Cordis），而「应用」菜单和系统�
 补丁的几个硬约束：
 
 * **等长改写**：`main.js` 的字节数完全不变（多出来的字节从 `//#region` / `//#endregion` 纯注释行里删掉，尾部空格补齐），asar 目录里其它文件的 `offset` 全部保持有效；
-* **同步完整性摘要**：同时刷新 asar 目录里 `lib/main.js` 的 SHA-256（等长 hex），即使某个构建打开了 `EnableEmbeddedAsarIntegrityValidation` 也不会失配；
-* **写前备份 + 语法预检**：先把原始 `main.js` 存到 `~/.dsh/dsh-restart/backups/<sha256>.js`（按原文件摘要一个文件，多份原版互不覆盖；旧版单文件 `main.original.js` 仍会读取），生成的新内容先跑一次 `node --check`，再写盘；
+* **同步完整性摘要**：同时刷新 asar 目录里 `lib/main.js` 的 SHA-256（等长 hex），即使某个构建打开了 `EnableEmbeddedAsarIntegrityValidation` 也不会失配；`status` 会回报 `integrity: ok|mismatch|missing`；
+* **写前备份 + 语法预检**：先把原始 `main.js` 存到 `~/.dsh/dsh-restart-asar/backups/<sha256>.js`（按原文件摘要一个文件，多份原版互不覆盖，只保留最近 5 份；旧版单文件 `main.original.js` 仍会读取），生成的新内容先跑一次 `node --check`，再写盘；
+* **串行写入**：apply/restore 先取 `~/.dsh/dsh-restart-asar/patcher.lock`（带 PID，10 分钟无人认领即接管），写完 `fsync` 并回读校验摘要——两个 DSH 实例同时启动也不会交错写坏同一个 asar；
 * **幂等 + 失败即放弃**：已经是补丁状态只做只读检查；结构对不上（换了 DSH 版本或已被别的壳补丁改过）就一个字节都不写，只记日志。
+
+> 0.1.x 版本写入的补丁标记是 `dsh-restart: shell patch`，改名后仍能被识别为 `patched`（可以正常 `restore`），不会被误判成未知布局。
 
 ## 安装
 
 桌面端 profile 由 Electron 独占管理，`dsh plugin --profile desktop ...` 会被拒绝，请用插件管理器：
 
-1. 设置 → 插件 → 从本地目录安装，指向本目录（含 `package.json` 的那一层）；
+1. 设置 → 插件 → 添加插件，输入 `github:Cirl3cat/dsh-restart-asar`（或把仓库 clone 下来，用「从本地目录安装」指向含 `package.json` 的那一层）；
 2. **完全退出并重新打开** DeepSeek Harness。第一次启动会打补丁，第二次启动菜单才会出现（主进程代码只在启动时读取）。
 
 ```bash
-git clone https://github.com/Cirl3cat/dsh-restart.git
+git clone https://github.com/Cirl3cat/dsh-restart-asar.git
 ```
 
 > 补丁在 Host 启动后约 2 秒执行；本次启动看到的仍是旧菜单，下一次启动生效。
+>
+> 插件页里输入裸名 `dsh-restart` 装到的是别人的同名包（npm 上被 `anweat` 占用），不是本项目。
+
+## 如何知道有新版本
+
+本插件通过 GitHub（clone / `github:` 源）分发，插件管理器不会提示更新。升级时：
+
+```bash
+git pull        # 或在插件页重新安装
+```
+
+然后完全退出并重开 DSH。想知道自己装的是哪一版，看 `package.json` 的 `version`，或对比 [Releases](https://github.com/Cirl3cat/dsh-restart-asar/releases) 页的最新 tag。
 
 ## 桌面端升级之后
 
@@ -85,7 +100,7 @@ node lib/patcher.mjs restore --original <原始 main.js>   # 用指定的原版�
 
 默认路径按以下顺序解析：`--asar` → `DSH_DESKTOP_APP_ASAR` → `DSH_NODE_EXECUTABLE` 同级的 `resources/app.asar` → 本进程可执行文件同级的 `resources/app.asar` → `%LOCALAPPDATA%\Programs\DeepSeek Harness\resources\app.asar` → `%ProgramFiles%\DeepSeek Harness\resources\app.asar`。
 
-每次运行的状态在 `~/.dsh/dsh-restart/status.json`，日志在 `~/.dsh/dsh-restart/dsh-restart.log`。
+每次运行的状态在 `~/.dsh/dsh-restart-asar/status.json`，日志在 `~/.dsh/dsh-restart-asar/dsh-restart-asar.log`，备份与锁在 `~/.dsh/dsh-restart-asar/backups/` 和 `patcher.lock`。状态目录可用 `DSH_RESTART_ASAR_HOME` 覆盖（旧的 `DSH_RESTART_HOME` 仍兼容）。
 
 ## 卸载
 
@@ -107,7 +122,7 @@ node lib/patcher.mjs restore      # 先还原托盘与菜单
 
 | 项目 | 要求 |
 | --- | --- |
-| DSH | `>=0.2.2-rc.5 <0.3.0`（在 0.2.2-rc.5 上验证） |
+| DSH | `>=0.2.2-rc.5`（在 0.2.2-rc.5 上验证） |
 | 平台 | 打包的 Windows 桌面端（Electron）；`dsh web` / headless 不受支持 |
 | Node（CLI/测试用） | ≥ 20 |
 
@@ -125,7 +140,7 @@ node lib/patcher.mjs status --json
 
 ## English
 
-`dsh-restart` adds a **Restart** entry to the DeepSeek Harness **desktop** app on Windows:
+`dsh-restart-asar` adds a **Restart** entry to the DeepSeek Harness **desktop** app on Windows:
 
 * **Application menu**: `应用` → **重启**, directly above **退出** (same adjacency as `检查更新…` / `管理 dsh 命令…`).
 * **System tray**: `Open DeepSeek Harness` / separator / **Restart DeepSeek Harness** / separator / `Quit DeepSeek Harness`.
