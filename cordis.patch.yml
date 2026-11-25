@@ -1,0 +1,7 @@
+# dsh-restart bundle patch: mount the shell-restart row.
+# The row only acts on the packaged Windows desktop app; elsewhere it logs and
+# does nothing.
+
+- insert:
+    - id: dsh-restart
+      name: dsh-restart

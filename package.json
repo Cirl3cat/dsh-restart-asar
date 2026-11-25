@@ -1,0 +1,54 @@
+{
+  "name": "dsh-restart",
+  "version": "0.1.0",
+  "description": "Restart entry for the DeepSeek Harness desktop shell: adds 重启 to the Windows caption menu and 重启 DeepSeek Harness to the system tray, with a restart that fully quits and cold-starts the app.",
+  "icon": "icon.svg",
+  "type": "module",
+  "main": "index.js",
+  "license": "MIT",
+  "author": "Cirl3cat",
+  "homepage": "https://github.com/Cirl3cat/dsh-restart#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Cirl3cat/dsh-restart.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Cirl3cat/dsh-restart/issues"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "restart",
+    "tray",
+    "menu",
+    "windows"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "lib/patch.js",
+    "lib/asar.js",
+    "lib/patcher.mjs",
+    "cordis.patch.yml",
+    "locale/en.json",
+    "locale/zh.json",
+    "icon.svg",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "manifestVersion": 1
+  },
+  "engines": {
+    "dsh": ">=0.2.2-rc.5 <0.3.0"
+  }
+}

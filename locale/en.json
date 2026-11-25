@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Restart App",
+    "description": "Adds a Restart item above Quit in the desktop Application menu and between Open and Quit in the system tray; restart fully quits and cold-starts the app, follows the application language, and re-applies itself after desktop updates."
+  }
+}
