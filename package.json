@@ -39,6 +39,9 @@
     "locale/en.json",
     "locale/zh.json",
     "icon.svg",
+    "docs/screenshots/app-menu.png",
+    "docs/screenshots/tray-menu.png",
+    "docs/screenshots/restart-confirm.png",
     "README.md",
     "LICENSE"
   ],

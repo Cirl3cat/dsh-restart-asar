@@ -26,6 +26,16 @@
 └─ 退出
 ```
 
+## 实际效果
+
+| 应用菜单 | 系统托盘 |
+| --- | --- |
+| ![应用菜单里的「重启」](docs/screenshots/app-menu.png) | ![托盘里的「重启 DeepSeek Harness」](docs/screenshots/tray-menu.png) |
+
+有任务在运行时，点「重启」会先弹出与官方退出同源的确认框（标题和按钮都写「重启」，说明沿用官方文案）：
+
+![重启确认框](docs/screenshots/restart-confirm.png)
+
 ## 为什么需要改 `app.asar`
 
 DSH 插件运行在 Host 子进程（Cordis），而「应用」菜单和系统托盘都属于 **Electron 主进程**；官方没有暴露菜单 / 托盘 / Electron 的扩展点。所以本插件在 Host 启动后，对桌面端 `resources/app.asar` 里的 `/lib/main.js` 打一个**最小、等长、可回滚**的补丁：
